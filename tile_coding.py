@@ -47,4 +47,44 @@ def tileCoding(feature, tilings):
 
     return np.array(feature_codings)
 
+class qvalueFunction:
+
+    def __init__(self, tilings, actions, lr):
+        self.tilings = tilings
+        self.num_tilings = len(self.tilings)
+        self.actions = actions
+        self.lr = lr
+        self.state_sizes = [tuple(len(splits) + 1 for splits in tiling) for tiling in self.tilings]
+        self.q_tables = [np.zeros(shape=(state_size+(len(self.actions),))) for state_size in self.state_sizes]
+
+    def value(self, state, action):
+        state_codings = tileCoding(state, self.tilings)
+        action_idx = self.actions.index(action)
+
+        value = 0
+        
+        for coding, q_table in zip(state_codings, self.q_tables):
+            value += q_table[tuple(coding) + (action_idx,)]
+
+        return value / self.num_tilings
+
+    def update(self, state, action, target):
+        state_codings = tileCoding(state, self.tilings)
+        action_idx = self.actions.index(action)
+
+        for coding, q_table in zip(state_codings, self.q_tables):
+            delta = target - q_table[tuple(coding) + (action_idx,)]
+            q_table[tuple(coding) + (action_idx,)] += self.lr * delta
+
+    # get the # of steps to reach the goal under current state value function
+    def stepcost(self, state):
+        costs = []
+        for action in self.actions:
+            costs.append(self.value(state,action))
+            
+        return -np.max(costs)
+
+
+
+
 
