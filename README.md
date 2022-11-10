@@ -1,1 +1,2 @@
 # MultiVariable_Nexting
+Find a long (greater than 100k samples), multi-dimensional time-series dataset and compare TD-lambda predictions to iterated n-step predictions made by classical time-series prediction methods.
