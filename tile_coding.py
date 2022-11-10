@@ -30,29 +30,6 @@ def createTilings(feature_ranges, number_tilings, bins, offsets):
 
     return np.array(tilings)
 
-def tileCoding(feature, tilings):
-    """
-    feature: sample feature with multiple dimensions that need to be encoded; example: [0.1, 2.5], [-0.3, 2.0]
-    tilings: tilings with a few layers
-    return: the encoding for the feature on each layer
-    """
-
-    num_d = len(feature)
-    feature_codings = []
-
-    for tiling in tilings:
-        feature_coding = []
-
-        for i in range(num_d):
-            i_feature = feature[i]
-            i_tiling = tiling[i] #tiling on that dimension
-            i_coding = np.digitize(i_feature, i_tiling)
-            feature_coding.append(i_coding)
-        
-        feature_codings.append(feature_coding)
-
-    return np.array(feature_codings)
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -84,7 +61,7 @@ feature_ranges = []
 for i in range(len(raw_data)):
     feature_ranges.append([min(raw_data[i]), max(raw_data[i])])
 
-print("Feature Ranges: ", feature_ranges)
+#print("Feature Ranges: ", feature_ranges)
 
 NUMBER_TILINGS = 8
 bins = []
@@ -94,50 +71,8 @@ for i in range(NUMBER_TILINGS):
     bins.append([len(item) + 1 for item in raw_data])
     offsets.append([ 0.2 for _ in raw_data]) #
 
-print(bins)
-print(offsets)
+#print(bins)
+#print(offsets)
 
 tilings = createTilings(feature_ranges, NUMBER_TILINGS, bins, offsets)
 print(tilings.shape)
-
-class qvalueFunction:
-
-    def __init__(self, tilings, actions, lr):
-        self.tilings = tilings
-        self.num_tilings = len(self.tilings)
-        self.actions = actions
-        self.lr = lr
-        self.state_sizes = [tuple(len(splits) + 1 for splits in tiling) for tiling in self.tilings]
-        self.q_tables = [np.zeros(shape=(state_size+(len(self.actions),))) for state_size in self.state_sizes]
-
-    def value(self, state, action):
-        state_codings = tileCoding(state, self.tilings)
-        action_idx = self.actions.index(action)
-
-        value = 0
-        
-        for coding, q_table in zip(state_codings, self.q_tables):
-            value += q_table[tuple(coding) + (action_idx,)]
-
-        return value / self.num_tilings
-
-    def update(self, state, action, target):
-        state_codings = tileCoding(state, self.tilings)
-        action_idx = self.actions.index(action)
-
-        for coding, q_table in zip(state_codings, self.q_tables):
-            delta = target - q_table[tuple(coding) + (action_idx,)]
-            q_table[tuple(coding) + (action_idx,)] += self.lr * delta
-
-    # get the # of steps to reach the goal under current state value function
-    def stepcost(self, state):
-        costs = []
-        for action in self.actions:
-            costs.append(self.value(state,action))
-            
-        return -np.max(costs)
-
-
-
-
-
