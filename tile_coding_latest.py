@@ -9,39 +9,49 @@ from sklearn.preprocessing import normalize
 import torch
 
 
-def get_tiles(self, feature_ranges):
+class HeartBeatTileCoder:
+    def __init__(self, iht_size=4096, num_tilings=8, num_tiles=8):
         """
-        Takes a feature range from heartbeat dataset  
+        Initializes the HeartBeat Tile Coder
+        Initializers:
+        iht_size -- int, the size of the index hash table, typically a power of 2
+        num_tilings -- int, the number of tilings
+        num_tiles -- int, the number of tiles. Here both the width and height of the
+                     tile coder are the same
+        Class Variables:
+        self.iht -- tc.IHT, the index hash table that the tile coder will use
+        self.num_tilings -- int, the number of tilings the tile coder will use
+        self.num_tiles -- int, the number of tiles the tile coder will use
+        """
+        self.iht = IHT(iht_size)
+        self.num_tilings = num_tilings
+        self.num_tiles = num_tiles
+        
+    
+    def get_tiles(self, position):
+        """
+        Takes in a position from the heartbeat environment
         and returns a numpy array of active tiles.
         
         returns:
         tiles - np.array, active tiles
         """
+    
         
         position_scaled = 0
-        velocity_scaled = 0
         
-        # ----------------
-        # your code here
-        position_min = -1.2
-        position_max = 0.5
-        velocity_min = -0.07
-        velocity_max = 0.07
+        position_min = -0.33
+        position_max = 0.4
         
         
         position_scaled = self.num_tiles* ((position - position_min)/(position_max - position_min))
-        velocity_scaled = self.num_tiles* ((velocity - velocity_min)/(velocity_max - velocity_min))
         
       
         
-        # ----------------
-        
-        # get the tiles using tc.tiles, with self.iht, self.num_tilings and [scaled position, scaled velocity]
-        # nothing to implment here
-        tiles = tc.tiles(self.iht, self.num_tilings, [position_scaled, velocity_scaled])
+        tiles_ = tiles(self.iht, self.num_tilings, [position_scaled])
        
         
-        return np.array(tiles)
+        return np.array(tiles_)
 
 
 
@@ -75,7 +85,23 @@ for i in range(len(raw_data)):
 
 # feature range
 feature_ranges = []
-for i in range(len(raw_data)):
-    feature_ranges.append([min(raw_data[i]), max(raw_data[i])])
+#for i in range(len(raw_data)):
+    #feature_ranges.append([min(raw_data[i]), max(raw_data[i])])
 
-print("Feature Ranges: ", feature_ranges)
+feature_ranges.append([min(raw_data[0]), max(raw_data[0])])
+
+hbtc = HeartBeatTileCoder(iht_size=1024, num_tilings=8, num_tiles=2)
+
+#print("Feature Ranges: ", feature_ranges)
+
+position_bound = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=10)
+#print("position", position_bound)
+
+t = []
+
+for test in position_bound:
+    position = test
+    heart = hbtc.get_tiles(position=position)
+    t.append(heart)
+
+print(t)
