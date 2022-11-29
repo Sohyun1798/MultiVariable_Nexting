@@ -75,4 +75,4 @@ for i in range(NUMBER_TILINGS):
 #print(offsets)
 
 tilings = createTilings(feature_ranges, NUMBER_TILINGS, bins, offsets)
-print(tilings.shape)
+print(tilings[1])

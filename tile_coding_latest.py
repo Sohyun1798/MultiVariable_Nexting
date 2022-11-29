@@ -10,7 +10,7 @@ import torch
 
 
 class HeartBeatTileCoder:
-    def __init__(self, iht_size=4096, num_tilings=8, num_tiles=8):
+    def __init__(self, iht_size, num_tilings, num_tiles):
         """
         Initializes the HeartBeat Tile Coder
         Initializers:
@@ -45,6 +45,7 @@ class HeartBeatTileCoder:
         
         
         position_scaled = self.num_tiles* ((position - position_min)/(position_max - position_min))
+       #print(position_scaled)
         
       
         
@@ -90,17 +91,22 @@ feature_ranges = []
 
 feature_ranges.append([min(raw_data[0]), max(raw_data[0])])
 
-hbtc = HeartBeatTileCoder(iht_size=1024, num_tilings=8, num_tiles=2)
+
+hbtc = HeartBeatTileCoder(iht_size=4096, num_tilings=8, num_tiles=4)
+#print("hbtc", hbtc)
 
 #print("Feature Ranges: ", feature_ranges)
 
-position_bound = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=10)
+pos_tests = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=10)
+#vel_tests = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=8)
+#tests = list(itertools.product(pos_tests, vel_tests))
 #print("position", position_bound)
 
 t = []
 
-for test in position_bound:
+for test in pos_tests:
     position = test
+    #print(test)
     heart = hbtc.get_tiles(position=position)
     t.append(heart)
 
