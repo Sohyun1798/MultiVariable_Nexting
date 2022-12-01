@@ -92,12 +92,12 @@ feature_ranges = []
 feature_ranges.append([min(raw_data[0]), max(raw_data[0])])
 
 
-hbtc = HeartBeatTileCoder(iht_size=4096, num_tilings=8, num_tiles=4)
+hbtc = HeartBeatTileCoder(iht_size=4096, num_tilings=50, num_tiles=6)
 #print("hbtc", hbtc)
 
 #print("Feature Ranges: ", feature_ranges)
 
-pos_tests = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=10)
+pos_tests = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=1000)
 #vel_tests = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=8)
 #tests = list(itertools.product(pos_tests, vel_tests))
 #print("position", position_bound)
