@@ -28,7 +28,7 @@ class HeartBeatTileCoder:
         self.num_tiles = num_tiles
         
     
-    def get_tiles(self, position):
+    def get_tiles(self, sensor0, sensor1, row1, row2):
         """
         Takes in a position from the heartbeat environment
         and returns a numpy array of active tiles.
@@ -38,18 +38,23 @@ class HeartBeatTileCoder:
         """
     
         
-        position_scaled = 0
+        sensor0_scaled = 0
+        sensor1_scaled = 0
         
-        position_min = -0.33
-        position_max = 0.4
+        sensor0_min = feature_ranges[row1][0]
+        #print(feature_ranges[0][0])
+        sensor0_max = feature_ranges[row1][1]
+        sensor1_min = feature_ranges[row2][0]
+        sensor1_max = feature_ranges[row2][1]
         
         
-        position_scaled = self.num_tiles* ((position - position_min)/(position_max - position_min))
+        sensor0_scaled = self.num_tiles* ((sensor0 - sensor0_min)/(sensor0_max - sensor0_min))
+        sensor1_scaled = self.num_tiles* ((sensor1 - sensor1_min)/(sensor1_max - sensor1_min))
        #print(position_scaled)
         
       
         
-        tiles_ = tiles(self.iht, self.num_tilings, [position_scaled])
+        tiles_ = tiles(self.iht, self.num_tilings, [sensor0_scaled,sensor1_scaled])
        
         
         return np.array(tiles_)
@@ -84,30 +89,335 @@ channels = data.ch_names
 for i in range(len(raw_data)):
     raw_data[i] = nk.ecg_clean(raw_data[i],method="neurokit")
 
+weighted_data = []
+
+for i in range(len(raw_data)):
+    alpha = 0.1
+    beta = alpha
+    s = 0  
+    data = [] 
+    for t in range(len(raw_data[i])):
+        #print(len(raw_data[i]), t)
+        data.append((1 - beta) * s + beta * raw_data[i][t])
+        s = data[t]
+        beta = alpha/s
+
+    weighted_data.append(data) 
+
+new_data = np.array(weighted_data)
+print(new_data.shape)
+
+#print(type(new_data))  
+
+#df = pd.DataFrame(new_data.T).iloc[0:5000]
+#df.plot(kind="line",figsize=(15,3))
+#plt.show()
+
+
 # feature range
 feature_ranges = []
+for i in range(len(new_data)):
+    feature_ranges.append([min(new_data[i]), max(new_data[i])])
+
+#print(feature_ranges)
+
+# feature range
+#feature_ranges = []
 #for i in range(len(raw_data)):
     #feature_ranges.append([min(raw_data[i]), max(raw_data[i])])
 
-feature_ranges.append([min(raw_data[0]), max(raw_data[0])])
+#feature_ranges.append([min(raw_data[0]), max(raw_data[0])])
 
 
-hbtc = HeartBeatTileCoder(iht_size=4096, num_tilings=50, num_tiles=6)
+hbtc = HeartBeatTileCoder(iht_size=256, num_tilings=16, num_tiles=4)
 #print("hbtc", hbtc)
 
 #print("Feature Ranges: ", feature_ranges)
+#tiles for sensor 0 and 1
 
-pos_tests = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=1000)
-#vel_tests = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=8)
-#tests = list(itertools.product(pos_tests, vel_tests))
+heart_sensor0 = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[1][0], feature_ranges[1][1], num=10)
+dot_0_1 = list(itertools.product(heart_sensor0, heart_sensor1))
+#print(len(dot_0_1))
+
+t = []
+row1 = 0
+row2 = 1
+for feature in dot_0_1:
+    sensor0, sensor1 = feature
+    print(sensor0, sensor1)
+    #print(test)
+    heart = hbtc.get_tiles(sensor0, sensor1, row1, row2)
+
+    t.append(heart)
+
+tiles_0_1 = np.array(t)
+print(tiles_0_1)
+
+
+#tiles for sensor 0 and 2
+
+heart_sensor0 = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[2][0], feature_ranges[2][1], num=10)
+dot_0_2 = list(itertools.product(heart_sensor0, heart_sensor1))
 #print("position", position_bound)
 
 t = []
+row1 = 0
+row2 = 2
 
-for test in pos_tests:
-    position = test
+for feature in dot_0_2:
+    sensor0, sensor2 = feature
     #print(test)
-    heart = hbtc.get_tiles(position=position)
+    heart = hbtc.get_tiles(sensor0, sensor2, row1, row2)
+
     t.append(heart)
 
-print(t)
+t = list(np.asarray(t) + 1024)
+tiles_0_2 = np.array(t)
+#tiles_0_2.append(tiles_0_2 + 1024)
+#print(tiles_0_2[2])
+
+#tiles for sensor 0 and 3
+
+heart_sensor0 = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[3][0], feature_ranges[3][1], num=10)
+dot_0_2 = list(itertools.product(heart_sensor0, heart_sensor1))
+#print("position", position_bound)
+
+t = []
+row1 = 0
+row2 = 3
+
+for feature in dot_0_2:
+    sensor0, sensor2 = feature
+    #print(test)
+    heart = hbtc.get_tiles(sensor0, sensor2, row1, row2)
+
+    t.append(heart)
+
+t = list(np.asarray(t) + 2048)
+tiles_0_3 = np.array(t)
+
+#tiles for sensor 0 and 4
+heart_sensor0 = np.linspace(feature_ranges[0][0], feature_ranges[0][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[4][0], feature_ranges[4][1], num=10)
+dot_0_2 = list(itertools.product(heart_sensor0, heart_sensor1))
+#print("position", position_bound)
+
+t = []
+row1 = 0
+row2 = 4
+
+for feature in dot_0_2:
+    sensor0, sensor2 = feature
+    #print(test)
+    heart = hbtc.get_tiles(sensor0, sensor2, row1, row2)
+
+    t.append(heart)
+
+t = list(np.asarray(t) + 3072)
+tiles_0_4 = np.array(t)
+
+#tiles for sensor 1 and 2
+heart_sensor0 = np.linspace(feature_ranges[1][0], feature_ranges[1][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[2][0], feature_ranges[2][1], num=10)
+dot_0_2 = list(itertools.product(heart_sensor0, heart_sensor1))
+#print("position", position_bound)
+
+t = []
+row1 = 1
+row2 = 2
+
+for feature in dot_0_2:
+    sensor0, sensor2 = feature
+    #print(test)
+    heart = hbtc.get_tiles(sensor0, sensor2, row1, row2)
+
+    t.append(heart)
+
+t = list(np.asarray(t) + 4096)
+tiles_1_2 = np.array(t)
+
+#tiles for sensor 1 and 3
+
+heart_sensor0 = np.linspace(feature_ranges[1][0], feature_ranges[1][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[3][0], feature_ranges[3][1], num=10)
+dot_0_2 = list(itertools.product(heart_sensor0, heart_sensor1))
+#print("position", position_bound)
+
+t = []
+row1 = 1
+row2 = 3
+
+for feature in dot_0_2:
+    sensor0, sensor2 = feature
+    #print(test)
+    heart = hbtc.get_tiles(sensor0, sensor2, row1, row2)
+
+    t.append(heart)
+
+t = list(np.asarray(t) + 5120)
+tiles_1_3 = np.array(t)
+
+#tiles for sensor 1 and 4
+heart_sensor0 = np.linspace(feature_ranges[1][0], feature_ranges[1][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[4][0], feature_ranges[4][1], num=10)
+dot_0_2 = list(itertools.product(heart_sensor0, heart_sensor1))
+#print("position", position_bound)
+
+t = []
+row1 = 1
+row2 = 4
+
+for feature in dot_0_2:
+    sensor0, sensor2 = feature
+    #print(test)
+    heart = hbtc.get_tiles(sensor0, sensor2, row1, row2)
+
+    t.append(heart)
+
+t = list(np.asarray(t) + 6144)
+tiles_1_4 = np.array(t)
+
+#tiles for sensor 2 and 3
+
+heart_sensor0 = np.linspace(feature_ranges[2][0], feature_ranges[2][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[3][0], feature_ranges[3][1], num=10)
+dot_0_2 = list(itertools.product(heart_sensor0, heart_sensor1))
+#print("position", position_bound)
+
+t = []
+row1 = 2
+row2 = 3
+
+for feature in dot_0_2:
+    sensor0, sensor2 = feature
+    #print(test)
+    heart = hbtc.get_tiles(sensor0, sensor2, row1, row2)
+
+    t.append(heart)
+
+t = list(np.asarray(t) + 7168)
+tiles_2_3 = np.array(t)
+
+#tiles for sensor 2 and 4
+
+heart_sensor0 = np.linspace(feature_ranges[2][0], feature_ranges[2][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[4][0], feature_ranges[4][1], num=10)
+dot_0_2 = list(itertools.product(heart_sensor0, heart_sensor1))
+#print("position", position_bound)
+
+t = []
+row1 = 2
+row2 = 4
+
+for feature in dot_0_2:
+    sensor0, sensor2 = feature
+    #print(test)
+    heart = hbtc.get_tiles(sensor0, sensor2, row1, row2)
+
+    t.append(heart)
+
+t = list(np.asarray(t) + 8192)
+tiles_2_4 = np.array(t)
+
+#tiles for sensor 3 and 4
+
+heart_sensor0 = np.linspace(feature_ranges[3][0], feature_ranges[3][1], num=10)
+heart_sensor1 = np.linspace(feature_ranges[4][0], feature_ranges[4][1], num=10)
+dot_0_2 = list(itertools.product(heart_sensor0, heart_sensor1))
+#print("position", position_bound)
+
+t = []
+row1 = 3
+row2 = 4
+
+for feature in dot_0_2:
+    sensor0, sensor2 = feature
+    #print(test)
+    heart = hbtc.get_tiles(sensor0, sensor2, row1, row2)
+
+    t.append(heart)
+
+t = list(np.asarray(t) + 9216)
+tiles_3_4 = np.array(t)
+
+active_tiles_0_1 = np.zeros(10240)
+
+for i in range(len(tiles_0_1)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_0_1[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+#print(active_tiles_0_1)
+
+for i in range(len(tiles_0_2)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_0_2[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+#print(active_tiles_0_1)
+
+for i in range(len(tiles_0_3)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_0_3[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+#print(active_tiles_0_1)
+
+for i in range(len(tiles_0_4)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_0_4[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+#print(active_tiles_0_1)
+
+for i in range(len(tiles_1_2)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_1_2[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+#print(active_tiles_0_1)
+
+for i in range(len(tiles_1_3)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_1_3[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+#print(active_tiles_0_1)
+
+for i in range(len(tiles_1_4)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_1_4[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+#print(active_tiles_0_1)
+
+for i in range(len(tiles_2_3)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_2_3[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+#print(active_tiles_0_1)
+
+for i in range(len(tiles_2_4)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_2_4[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+#print(active_tiles_0_1)
+
+for i in range(len(tiles_3_4)):
+    #print("active_tiles",tiles_0_1[i])
+    active_tiles_0_1[tiles_3_4[i]] = 1
+    #m = tiles_0_1[i]
+    #print("where 1", m, active_tiles_0_1[m])
+print(active_tiles_0_1.shape)
+
+c = 0
+for i in range(len(active_tiles_0_1)):
+    if active_tiles_0_1[i]==1:
+        c = c + 1
+
+print(c)
