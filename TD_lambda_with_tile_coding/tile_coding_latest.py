@@ -421,3 +421,12 @@ for i in range(len(active_tiles_0_1)):
         c = c + 1
 
 print(c)
+
+
+"""
+#convert array to matrix for multiplication
+    x_t = np.asmatrix(get_feature(t))
+    x_next = np.asmatrix(get_feature(t + 1))
+    w = np.asmatrix(w)
+    z = np.asmatrix(z)
+"""
