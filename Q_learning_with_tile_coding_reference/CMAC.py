@@ -79,7 +79,7 @@ class QvalueCMAC:
 
     def _get_best_action_and_qvalue_for_state(self,state_dict):
         #pick any random action to start with, just so we are not biased when there is a tie
-        best_action = random.choice(self.actions_map.keys())
+        best_action = random.choice(list(self.actions_map.keys()))[:200]
         best_qvalue = self.get_qvalue(state_dict,best_action)
 
         for action in self.actions_map:
