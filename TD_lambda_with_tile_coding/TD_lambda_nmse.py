@@ -142,7 +142,9 @@ for t in range(1, 100):
     w = w + alpha * delta * z
 
 # prediction and error calculation
-rmse = []
+nmse = []
+v = np.var(raw_data[0])
+
 for t in range(100):
      
     x_current = get_feature(t)
@@ -155,11 +157,13 @@ for t in range(100):
         actual_value += np.power(gamma, gamma_c) * new_data[1][i]
         gamma_c += 1
 
-    rmse.append(np.sqrt(np.mean(np.power(pred - actual_value, 2))))
+    mse = np.mean(np.power(pred - actual_value, 2)) / v
+
+    nmse.append(mse)
 
 
 x = np.arange(100)
-y = np.array(rmse)
+y = np.array(nmse)
 
 plt.plot(x, y)
 plt.show()
