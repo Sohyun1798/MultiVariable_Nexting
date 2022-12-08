@@ -9,7 +9,7 @@ from sklearn.preprocessing import normalize
 import torch
 
 class HeartBeatTileCoder:
-    def __init__(self, iht_size, num_tilings, num_tiles):
+    def __init__(self, iht_size=256, num_tilings=16, num_tiles=4):
         """
         Initializes the HeartBeat Tile Coder
         Initializers:
