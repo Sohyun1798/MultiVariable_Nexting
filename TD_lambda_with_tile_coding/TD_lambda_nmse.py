@@ -132,7 +132,7 @@ w = np.zeros(10 * iht_size)
 z = np.zeros(10 * iht_size)
 
 #training
-for t in range(1, 300000):
+for t in range(1, 3000):
     reward = new_data[1][t]    #considering 2nd sensor
     x_last = get_feature(t - 1)  #get features for 10 pairs of heart sensor data
     x_current = get_feature(t)
@@ -143,26 +143,29 @@ for t in range(1, 300000):
 
 # prediction and error calculation
 nmse = []
-v = np.var(raw_data[1])
+#v = np.var(raw_data[1])
 
-for t in range(300000):
+for t in range(3000):
      
     x_current = get_feature(t)
     pred = np.dot(w.T, x_current) #td_lambda prediction
  
     #calculating discounted sum of future sensor data
     actual_value = 0
-    gamma_c = 0
-    for i in range(t, 300000):
-        actual_value += np.power(gamma, gamma_c) * new_data[1][i]
-        gamma_c += 1
+    G = []
+    gamma_count = 0
+    for i in range(t, 3000):
+        discounted_sum = np.power(gamma, gamma_count) * new_data[1][i]
+        actual_value += discounted_sum
+        G.append(discounted_sum)
+        gamma_count += 1
 
-    mse = np.mean(np.power(pred - actual_value, 2)) / v
+    mse = np.mean(np.power(pred - actual_value, 2)) / np.var(G)
 
     nmse.append(mse)
 
 
-x = np.arange(300000)
+x = np.arange(3000)
 y = np.array(nmse)
 
 plt.plot(x, y)
