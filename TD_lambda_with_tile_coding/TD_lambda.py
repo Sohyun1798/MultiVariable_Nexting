@@ -69,8 +69,9 @@ def get_feature(i):
             c = c + 1
             active_tiles.append(t)
 
-    for feature in range(len(active_tiles)):
-        x[active_tiles] = 1
+    for feature in active_tiles:
+        x[feature] = 1
+        
 
     return np.array(x)
 
@@ -132,7 +133,7 @@ w = np.zeros(10 * iht_size)
 z = np.zeros(10 * iht_size)
 
 #training
-for t in range(1, 100):
+for t in range(1, 10000):
     reward = new_data[1][t]    #considering 2nd sensor
     x_last = get_feature(t - 1)  #get features for 10 pairs of heart sensor data
     x_current = get_feature(t)
@@ -143,7 +144,7 @@ for t in range(1, 100):
 
 # prediction and error calculation
 rmse = []
-for t in range(100):
+for t in range(10000):
      
     x_current = get_feature(t)
     pred = np.dot(w.T, x_current) #td_lambda prediction
@@ -151,17 +152,19 @@ for t in range(100):
     #calculating discounted sum of future sensor data
     actual_value = 0
     gamma_c = 0
-    for i in range(t, 100):
+    for i in range(t, 10000):
         actual_value += np.power(gamma, gamma_c) * new_data[1][i]
         gamma_c += 1
 
     rmse.append(np.sqrt(np.mean(np.power(pred - actual_value, 2))))
 
 
-x = np.arange(100)
+x = np.arange(10000)
 y = np.array(rmse)
 
 plt.plot(x, y)
+plt.xlabel("Number of timesteps")
+plt.ylabel("RMSE")
 plt.show()
 #print(rmse)
 
