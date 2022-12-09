@@ -8,6 +8,7 @@ import mne
 from sklearn.preprocessing import normalize
 import torch
 
+NUM_STEPS = 3000
 class HeartBeatTileCoder:
     def __init__(self, iht_size=256, num_tilings=16, num_tiles=4):
         """
@@ -74,6 +75,19 @@ def get_feature(i):
 
     return np.array(x)
 
+def exponential_weighted_data(raw_data):
+    weighted_data = []
+    for i in range(len(raw_data)):
+        alpha = 0.98
+        beta = alpha
+        s = 0  
+        data = [] 
+        for t in range(len(raw_data[i])):
+            s_new = (1 - beta) * raw_data[i][t] + beta * s
+            data.append(s_new)
+            s = s_new
+        weighted_data.append(data) 
+    return np.array(weighted_data)
 
 # load data
 file = "data/r04.edf"
@@ -87,29 +101,13 @@ raw_data = normalize(raw_data,axis=1,norm="max")
 info = data.info
 channels = data.ch_names
 
-# cleanup the data
-for i in range(len(raw_data)):
-    raw_data[i] = nk.ecg_clean(raw_data[i],method="neurokit")
+# # # cleanup the data
+# for i in range(len(raw_data)):
+#     raw_data[i] = nk.ecg_clean(raw_data[i],method="neurokit")
 
 
 #exponential weighted averages of the heart sensors
-weighted_data = []
-
-for i in range(len(raw_data)):
-    alpha = 0.1
-    beta = alpha
-    s = 0  
-    data = [] 
-    for t in range(len(raw_data[i])):
-        data.append((1 - beta) * s + beta * raw_data[i][t])
-        s = data[t]
-        beta = alpha/s
-
-    weighted_data.append(data) 
-
-new_data = np.array(weighted_data)
-print(new_data.shape)
-
+new_data = exponential_weighted_data(raw_data)
 
 # feature range
 feature_ranges = []
@@ -132,7 +130,7 @@ w = np.zeros(10 * iht_size)
 z = np.zeros(10 * iht_size)
 
 #training
-for t in range(1, 3000):
+for t in range(1, NUM_STEPS):
     reward = new_data[1][t]    #considering 2nd sensor
     x_last = get_feature(t - 1)  #get features for 10 pairs of heart sensor data
     x_current = get_feature(t)
@@ -145,7 +143,7 @@ for t in range(1, 3000):
 nmse = []
 #v = np.var(raw_data[1])
 
-for t in range(3000):
+for t in range(NUM_STEPS):
      
     x_current = get_feature(t)
     pred = np.dot(w.T, x_current) #td_lambda prediction
@@ -154,7 +152,7 @@ for t in range(3000):
     actual_value = 0
     G = []
     gamma_count = 0
-    for i in range(t, 3000):
+    for i in range(t, NUM_STEPS):
         discounted_sum = np.power(gamma, gamma_count) * new_data[1][i]
         actual_value += discounted_sum
         G.append(discounted_sum)
@@ -165,12 +163,6 @@ for t in range(3000):
     nmse.append(mse)
 
 
-x = np.arange(3000)
 y = np.array(nmse)
-
-plt.plot(x, y)
+plt.plot(y)
 plt.show()
-#print(rmse)
-
-
-
